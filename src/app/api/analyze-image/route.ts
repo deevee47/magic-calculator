@@ -89,7 +89,7 @@ const prompt = `You have been given an image with some mathematical expressions,
         answers = [answers];
       }
     } catch (e) {
-      console.log("Failed to parse as JSON, creating simple response");
+      console.log("Failed to parse as JSON, creating simple response", e);
       answers = [
         {
           expr: text.substring(0, 100), // Truncate long responses

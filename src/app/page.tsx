@@ -1,15 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import axios from "axios";
 import { SWATCHES } from "../../constants";
 import toast from "react-hot-toast";
 
-interface Response {
-  expr: string;
-  result: string;
-  assigned: boolean;
-}
 
 interface GeneratedResponse {
   expr: string;
@@ -84,6 +78,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append("image", blob, "drawing.jpg");
       formData.append("variables", JSON.stringify(variables));
+      setVariables(variables)
 
       const response = await fetch("/api/analyze-image", {
         method: "POST",
