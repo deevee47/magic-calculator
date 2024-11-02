@@ -1,101 +1,213 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { SWATCHES } from "../../constants";
+import toast from "react-hot-toast";
+
+interface Response {
+  expr: string;
+  result: string;
+  assigned: boolean;
+}
+
+interface GeneratedResponse {
+  expr: string;
+  result: string;
+}
+
+interface Variables {
+  [key: string]: string | number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("rgb(255,255,255)");
+  const [reset, setReset] = useState(false);
+  const [result, setResult] = useState<GeneratedResponse | null>(null);
+  const [variables, setVariables] = useState<Variables>({});
+  const [loading, setLoading] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  useEffect(() => {
+    if (reset) {
+      resetCanvas();
+      setReset(false);
+    }
+  }, [reset]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - canvas.offsetTop;
+        ctx.lineCap = "round";
+        ctx.lineWidth = 3;
+      }
+    }
+  }, []);
+
+  const sendData = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    const isEmpty = pixels.every((pixel, index) => {
+      return index % 4 === 3 ? true : pixel === 0;
+    });
+
+    if (isEmpty) {
+      toast.error("Please draw something first!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Failed to create blob"));
+          },
+          "image/jpeg",
+          0.8
+        );
+      });
+
+      const formData = new FormData();
+      formData.append("image", blob, "drawing.jpg");
+      formData.append("variables", JSON.stringify(variables));
+
+      const response = await fetch("/api/analyze-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to analyze image");
+      }
+
+      if (data.results?.[0]) {
+        setResult(data.results[0]);
+        toast.success("Analysis complete!");
+      } else {
+        toast.error("No results found");
+      }
+    } catch (error) {
+      console.error("Full error details:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to analyze drawing");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetCanvas = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setResult(null);
+      }
+    }
+  };
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.style.background = "black";
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.beginPath();
+        ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        setIsDrawing(true);
+      }
+    }
+  };
+
+  const stopDrawing = () => setIsDrawing(false);
+
+  const captureDrawing = (e: React.MouseEvent) => {
+    if (!isDrawing) return;
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.strokeStyle = selectedColor;
+        ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+        ctx.stroke();
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+      <div className="grid grid-cols-3 gap-2 p-4">
+        <button
+          onClick={() => resetCanvas()}
+          className="z-10 font-bold rounded-xl py-3 px-6 bg-red-500 hover:bg-red-600"
+          disabled={loading}
+        >
+          Reset
+        </button>
+        <div className="z-10 grid grid-cols-12 gap-2 font-bold rounded-xl py-3 px-6">
+          {SWATCHES.map((color, index) => (
+            <p
+              key={index}
+              onClick={() => setSelectedColor(color)}
+              style={{ backgroundColor: color }}
+              className="rounded-full w-8 h-8 cursor-pointer border-2 border-white"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => sendData()}
+          className="z-10 font-bold rounded-xl py-3 px-6 bg-green-500 hover:bg-green-600"
+          disabled={loading}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {loading ? "Calculating..." : "Calculate"}
+        </button>
+      </div>
+
+      {/* Result Display */}
+      {result && (
+        <div className="fixed top-4 right-4 left-4 z-20 flex justify-center">
+          <div className="relative bg-gray-800 text-white p-6 rounded-xl shadow-lg border-2 border-green-500 max-w-lg w-full mx-auto">
+            <button
+              onClick={() => setResult(null)}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-200 text-5xl mr-2"
+            >
+              &times;
+            </button>
+            <div className="text-xl font-bold mb-3 text-center">
+              Expression:{" "}
+              <span className="text-yellow-400">{result.expr}</span>
+            </div>
+            <div className="text-2xl font-bold text-center">
+              Result: <span className="text-green-400">{result.result}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <canvas
+        ref={canvasRef}
+        onMouseDown={startDrawing}
+        onMouseMove={captureDrawing}
+        onMouseOut={stopDrawing}
+        onMouseUp={stopDrawing}
+        className="flex-1 w-full"
+      />
     </div>
   );
 }
