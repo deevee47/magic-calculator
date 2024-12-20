@@ -19,7 +19,7 @@ export default function Home() {
   const [selectedColor, setSelectedColor] = useState("rgb(255,255,255)");
   const [reset, setReset] = useState(false);
   const [result, setResult] = useState<GeneratedResponse | null>(null);
-  const [variables, setVariables] = useState<Variables>({});
+  const [variables, _] = useState<Variables>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

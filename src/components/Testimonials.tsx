@@ -1,15 +1,15 @@
 import React from 'react'
 
 const Testimonials = () => {
-    const testimonials = [{
-        name: 'John Doe',
-        title: 'CEO',
-        description:"Divyansh is cooking crazy!"
-    }, {
-            name: 'John Doe',
-            title: 'CEO',
-            description: ""
-        }]
+    // const testimonials = [{
+    //     name: 'John Doe',
+    //     title: 'CEO',
+    //     description:"Divyansh is cooking crazy!"
+    // }, {
+    //         name: 'John Doe',
+    //         title: 'CEO',
+    //         description: ""
+    //     }]
   return (
       <div className='w-full flex flex-col justify-center items-center'>
           <h1 className="text-8xl font-bold">लोगो ka काम hai कहना 🫢</h1>
