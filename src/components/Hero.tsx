@@ -1,11 +1,12 @@
-"use client"
+
 import { ArrowRightIcon, Sparkles } from 'lucide-react';
 import React from 'react'
 import AnimatedShinyText from './ui/animated-shiny-text';
 import CustomShinyButton from './ui/CustomShinyButton';
+
 const Hero = () => {
     return (
-        <>
+        <div>
         <div className="relative z-20 max-w-5xl mx-auto px-4 py-16 flex h-screen flex-col justify-center items-center text-center">
             <div className="relative">
                 <Sparkles
@@ -19,11 +20,11 @@ const Hero = () => {
                     <ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
                 </AnimatedShinyText>
             </div>
-            <h1 className="text-8xl mt-3 font-bold mb-6 text-white">
+            <h1 className="text-8xl mt-3 font-bold mb-6 capitalize">
                 Drawing problems, <br></br> deriving solutions!
             </h1>
 
-            <p className="text-xl font-semibold text-white mb-8">
+            <p className="text-2xl text-gray-400 mb-8">
                 Your ultimate problem-solver.
             </p>
 
@@ -40,11 +41,12 @@ const Hero = () => {
                     <Sparkles size={16} className="text-purple-400" />
                     <span>Repeat</span>
                 </div>  
-            </div>
-
+                </div>
+                <a href='/' >
             <CustomShinyButton />
+                </a>
             </div>
-            </>
+            </div>
     )
 }
 

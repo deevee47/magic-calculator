@@ -1,8 +1,11 @@
+"use client"
 import React from 'react'
 import ShinyButton from './shiny-button'
 
+
 const CustomShinyButton = () => {
-  return (
+
+    return (
       <div className="relative flex items-center justify-center">
           {/* Glow effect */}
           <div

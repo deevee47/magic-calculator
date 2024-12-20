@@ -54,15 +54,16 @@ const prompt = `You have been given an image with some mathematical expressions,
     Multiplication and Division (from left to right), Addition and Subtraction (from left to right). 
 
     YOU CAN HAVE FIVE TYPES OF EQUATIONS/EXPRESSIONS IN THIS IMAGE:
-    1. Simple mathematical expressions like 2 + 2, 3 * 4, etc.: Return [{"expr": "2 + 2", "result": "4"}]
-    2. Set of Equations: Return [{"expr": "x", "result": "2", "assign": true}, {"expr": "y", "result": "5", "assign": true}]
-    3. Assigning values: Return [{"expr": "x = 4", "result": "4", "assign": true}]
-    4. Graphical Math problems: Return [{"expr": "problem description", "result": "calculated answer"}]
-    5. Abstract Concepts: Return [{"expr": "explanation", "result": "concept"}]
+    1. Simple mathematical expressions like 2 + 2, 3 * 4, etc.: Return {"expr": "2 + 2", "result": "4"}
+    2. Set of Equations: Return {"expr": "x", "result": "2", "assign": true}, {"expr": "y", "result": "5", "assign": true}
+    3. Assigning values: Return {"expr": "x = 4", "result": "4", "assign": true}
+    4. Graphical Math problems: Return {"expr": "problem description", "result": "calculated answer"}
+    5. Abstract Concepts: Return {"expr": "explanation", "result": "concept"}
 
     
 
-    Return ONLY a JSON array with the results, no additional text.`;
+    Return ONLY a JSON with the results, no additional text.
+    Strictly follow this format: {"expr": "expression", "result": "result", "assign": true/false}`;
 
 
     // Call Gemini API
