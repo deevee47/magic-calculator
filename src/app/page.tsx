@@ -118,6 +118,10 @@ export default function Home() {
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    setIsIdle(false);
+    if (idleTimeout.current) {
+      clearTimeout(idleTimeout.current);
+    }
     const canvas = canvasRef.current;
     if (canvas) {
       canvas.style.background = "black";
@@ -142,7 +146,7 @@ export default function Home() {
     }
     idleTimeout.current = setTimeout(() => {
       setIsIdle(true);
-      sendData();
+      if(!(isIdle &&isDrawing))sendData();
     }, 2000);
     const canvas = canvasRef.current;
     if (canvas) {
